@@ -1,0 +1,85 @@
+<style>
+  body {
+    display: grid;
+    place-content: center;
+    background: #00b4ff;
+  }
+
+  .bubble {
+    position: relative;
+    height: 200px;
+    width: 200px;
+    border-radius: 50%;
+    box-shadow: 0 20px 30px rgba(0, 0, 0, 0.2), inset 0px 10px 30px 5px rgba(255, 255, 255, 1);
+  }
+
+  aside {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    position: fixed;
+    top: 40px;
+    right: 40px;
+  }
+
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #003566;
+    color: white;
+    cursor: pointer;
+    font-size: 24px;
+  }
+
+  button:hover {
+    background-color: #00539c;
+  }
+</style>
+
+<div class="bubble"></div>
+
+<aside>
+  <button type="button" id="inflate">Inflate</button>
+  <button type="button" id="deflate">Deflate</button>
+</aside>
+
+<script>
+  const bubble = document.querySelector(".bubble");
+  const inflateButton = document.querySelector("#inflate");
+  const deflateButton = document.querySelector("#deflate");
+
+  bubble.style.transition = "width 200ms ease, height 200ms ease, opacity 150ms ease";
+  const inflateSound=new Audio("inflate.mp3");
+  const deflateSound=new Audio("deflate.mp3");
+  const popSound = new Audio("pop.mp3");
+
+  let bubbleSize = 200;
+  const sizeChange = 20;
+  const minSize = 40;
+  const popSize = 360;
+
+  inflateButton.addEventListener('click', () =>{
+    if(bubbleSize >= popSize){
+      bubble.style.display = 'none';
+      popSound.play();
+    }else{
+      bubbleSize += sizeChange
+      bubble.style.width = bubbleSize + "px";
+      bubble.style.height = bubbleSize + "px";
+      inflateSound.play();
+    }
+  })
+
+  deflateButton.addEventListener('click', () =>{
+    if(bubbleSize <= minSize){
+      bubble.style.display = 'none';
+      popSound.play();
+    }else{
+      bubbleSize -= sizeChange;
+      bubble.style.width = bubbleSize + "px";
+      bubble.style.height = bubbleSize + "px";
+      deflateSound.play();
+    }
+  })
+</script>

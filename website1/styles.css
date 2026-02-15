@@ -1,0 +1,169 @@
+* {
+    margin: 0;
+    padding: 0;
+  }
+body{
+    margin:0px;
+    font-family: "Open Sans", sans-serif;
+    background-color: antiquewhite;
+
+}
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding:40px;
+    background-color: #3E1F0D;
+    color:antiquewhite;
+}
+
+header h1{
+    font-size:40px;
+    font-family: "Dancing Script", cursive;
+}
+
+main{
+    margin:80px; 
+}
+.intro{
+    text-align:center;
+}
+.intro p{
+    padding:0 80px;
+}
+aside{
+    display:flex;
+}
+aside section {
+    flex: 1;
+}
+section{
+    box-shadow: 5px 5px 20px 20px #d3b8ae9a;
+    padding:40px;
+    margin:40px;
+}
+
+section h1{
+    color: #3E1F0D;
+    text-align: center;
+}
+.card{
+    display:flex;
+    justify-content: space-around;
+    gap:30px;
+}
+.image_container {
+    width: 300px;
+    height: 400px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+}
+
+.image_container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fact {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+
+    padding: 15px;
+
+    opacity: 0;
+    transform: translateY(100%);
+    transition: 0.3s ease;
+}
+
+.fact.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+form h1 {
+    text-align: center;
+    font-size: 36px;
+    color: #3E1F0D;
+}
+
+form p {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+form label {
+    font-weight: 600;
+    color: #3E1F0D;
+}
+
+form input {
+    padding: 12px;
+
+    border: 2px solid #d3b8ae;
+    border-radius: 8px;
+
+    font-size: 16px;
+    font-family: "Open Sans", sans-serif;
+
+    transition: all 0.2s ease;
+}
+
+form input:focus {
+    outline: none;
+    border-color: #3E1F0D;
+    box-shadow: 0 0 8px rgba(62, 31, 13, 0.2);
+}
+
+form button {
+    margin-top: 10px;
+    padding: 14px;
+
+    border: none;
+    border-radius: 8px;
+
+    background-color: #3E1F0D;
+    color: antiquewhite;
+
+    font-size: 18px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+
+form button:hover {
+    background-color: #5a2d14;
+    transform: translateY(-2px);
+}
+
+form button:active {
+    transform: translateY(0);
+}
+
+footer {
+    padding:50px;
+    background-color: #3E1F0D;
+}
+
+footer a{
+    text-decoration:none;
+    color:antiquewhite;
+}
