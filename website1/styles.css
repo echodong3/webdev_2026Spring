@@ -1,6 +1,7 @@
 * {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
   }
 body{
     margin:0px;
@@ -36,6 +37,24 @@ aside{
 }
 aside section {
     flex: 1;
+}
+aside ul{
+    padding-left: 20px;
+}
+aside p{
+    margin:10px 0;
+}
+table {
+    border-collapse: collapse; 
+    width: 100%;
+}
+table, th, td {
+    border: 1px solid #3E1F0D; 
+}
+
+th, td {
+    padding: 6px;
+    text-align: left;
 }
 section{
     box-shadow: 5px 5px 20px 20px #d3b8ae9a;
@@ -159,6 +178,7 @@ form button:active {
 }
 
 footer {
+    color:antiquewhite;
     padding:50px;
     background-color: #3E1F0D;
 }
@@ -167,3 +187,11 @@ footer a{
     text-decoration:none;
     color:antiquewhite;
 }
+
+@media (max-width: 768px) {
+    main { margin: 20px; }
+    .intro p { padding: 0 10px; }
+    aside { flex-direction: column; }
+    .card { flex-direction: column; align-items: center; }
+    section { margin: 20px 0; padding: 20px; }
+  }
