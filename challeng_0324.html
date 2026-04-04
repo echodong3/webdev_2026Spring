@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cool Hover Grid</title>
+
+<style>
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background: #0b0f1a;
+}
+
+/* GRID */
+.container {
+    display: grid;
+    grid-template-columns: repeat(3, 180px);
+    gap: 16px;
+}
+
+/* CARDS */
+.container div {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(255,255,255,0.05);
+    color: white;
+    font-size: 20px;
+
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+
+    transition: all 0.3s ease;
+}
+
+/* dim others when hovering container */
+.container:hover div {
+    opacity: 0.4;
+    transform: scale(0.95);
+}
+
+/* highlight hovered card */
+.container div:hover {
+    opacity: 1;
+    transform: translateY(-10px) scale(1.08);
+
+    background: rgba(150, 237, 255, 0.6);
+
+    box-shadow:
+        0 10px 30px rgba(167, 139, 250, 0.4),
+        0 0 20px rgba(110, 231, 255, 0.6);
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+    <div>1</div>
+    <div>2</div>
+    <div>3</div>
+    <div>4</div>
+    <div>5</div>
+    <div>6</div>
+</div>
+</body>
+</html>
