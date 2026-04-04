@@ -16,32 +16,37 @@
             <p class="tagline">Plan your trip based on real-time weather</p>
         </header>
 
-        <section class="destination-section">
-            <h2>Choose Your Destination</h2>
+        <section class="destination-section" aria-labelledby="destination-heading">
+            <h2 id="destination-heading">Choose Your Destination</h2>
+
             <form id="userLocation" class="location-form">
                 <div class="input-group">
                     <label for="destination">Enter a city name:</label>
                     <div class="input-wrapper">
-                        <input 
-                            type="text" 
-                            id="destination" 
-                            name="destination" 
+                        <input
+                            type="text"
+                            id="destination"
+                            name="destination"
                             placeholder="e.g., New York, Tokyo, Paris"
                             required
-                            aria-label="Enter destination city"
+                            autocomplete="off"
                         >
                     </div>
                 </div>
+
                 <div class="button-group">
                     <button type="submit" id="submitBtn" class="btn btn-primary">Search Location</button>
                     <button type="button" id="geoBtn" class="btn btn-secondary">Use Current Location</button>
                 </div>
             </form>
-            <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+            <div id="errorMessage" class="error-message hidden" aria-live="polite"></div>
         </section>
 
-        <section class="weather-section" id="weatherSection" style="display: none;">
-            <h2>Current Weather</h2>
+        <section class="weather-section hidden" id="weatherSection" aria-labelledby="weather-heading">
+            <h2 id="weather-heading">Current Weather</h2>
+            <p id="locationLabel" class="location-label"></p>
+
             <div class="weather-grid">
                 <div class="weather-card">
                     <span class="label">Temperature</span>
@@ -60,17 +65,22 @@
                     <p id="wind" class="weather-value">—</p>
                 </div>
             </div>
+            
+            <p id="tripTip" class="location-label"></p>
         </section>
 
-        <section class="suggestions-section" id="suggestionsSection" style="display: none;">
-            <h2>Activities for Today</h2>
-            <div id="suggestions" class="suggestions-content">Loading suggestions...</div>
+        <section class="suggestions-section hidden" id="suggestionsSection" aria-labelledby="suggestions-heading">
+            <h2 id="suggestions-heading">Activities for Today</h2>
+            <div id="suggestions" class="suggestions-content" aria-live="polite">
+                Search for a location to get suggestions.
+            </div>
         </section>
 
         <footer>
-            <p>Powered by Geocoding, Weather, and AI APIs</p>
+            <p>Powered by Geocoding, Weather, OpenAI, and browser geolocation</p>
         </footer>
     </main>
+
     <script src="script.js"></script>
 </body>
 </html>
