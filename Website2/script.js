@@ -7,6 +7,7 @@ const weatherSection = document.getElementById('weatherSection');
 const suggestionsSection = document.getElementById('suggestionsSection');
 const locationLabel = document.getElementById('locationLabel');
 const suggestionsDiv = document.getElementById('suggestions');
+const tripTip = document.getElementById('tripTip');
 
 form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -100,7 +101,9 @@ async function handleGeolocation(latitude, longitude) {
         }
 
         const geoData = await geoResponse.json();
-        const city = geoData.results?.[0]?.formatted_address || `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
+        const city =
+            geoData.results?.[0]?.formatted_address ||
+            `${latitude.toFixed(3)}, ${longitude.toFixed(3)}`;
 
         destinationInput.value = city;
 
@@ -147,9 +150,10 @@ async function getWeatherByCoords(lat, lng) {
 
 async function displayWeatherAndSuggestions(city, weather) {
     const tempF = weather?.temperature?.degrees ?? 'N/A';
-    const tempC = typeof tempF === 'number'
-        ? ((tempF - 32) * 5 / 9).toFixed(1)
-        : 'N/A';
+    const tempC =
+        typeof tempF === 'number'
+            ? ((tempF - 32) * 5 / 9).toFixed(1)
+            : 'N/A';
     const uv = weather?.uvIndex ?? 'N/A';
     const weatherCond = weather?.weatherCondition?.description?.text ?? 'Unavailable';
     const wind = weather?.wind?.speed?.value ?? 'N/A';
@@ -161,6 +165,7 @@ async function displayWeatherAndSuggestions(city, weather) {
     document.getElementById('weather').textContent = weatherCond;
     document.getElementById('wind').textContent =
         typeof wind === 'number' ? `${wind} mph` : 'N/A';
+
     tripTip.textContent = generateTripTip(tempF, uv, weatherCond, wind);
 
     weatherSection.classList.remove('hidden');
@@ -174,37 +179,28 @@ async function displayWeatherAndSuggestions(city, weather) {
 }
 
 async function getActivitySuggestions(city, tempF, uv, weatherCond, wind) {
-    const prompt = `
-You are helping a traveler plan their day.
-Give exactly 5 practical and specific activity suggestions for ${city} based on this weather:
-- Temperature: ${tempF}°F
-- UV Index: ${uv}
-- Condition: ${weatherCond}
-- Wind: ${wind} mph
-
-Requirements:
-- Make the ideas realistic and varied
-- Mention weather-aware advice when relevant
-- Format as a numbered list
-`.trim();
-
     try {
-        const response = await fetch('https://cse2004.com/api/openai/responses', {
+        const response = await fetch('/api/suggestions', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer mjxi7hoe9t4q'
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ input: prompt })
+            body: JSON.stringify({
+                city,
+                tempF,
+                uv,
+                weatherCond,
+                wind
+            })
         });
 
         if (!response.ok) {
-            let message = 'Failed to get suggestions.';
+            let message = `Failed to get suggestions (${response.status}).`;
             try {
                 const errorData = await response.json();
-                message = errorData.message || message;
+                message = errorData.error || message;
             } catch {
-                // Ignore JSON parse failure
+                // ignore parse error
             }
             throw new Error(message);
         }
@@ -214,13 +210,14 @@ Requirements:
     } catch (error) {
         console.error('Suggestion error:', error);
         suggestionsDiv.textContent =
-            'Unable to load AI suggestions right now. You can still use the weather information above to plan your day.';
+            `Unable to load AI suggestions right now (${error.message}). You can still use the weather information above to plan your day.`;
     }
 }
-const tripTip = document.getElementById('tripTip');
 
 function generateTripTip(tempF, uv, weatherCond, wind) {
-    if (weatherCond.toLowerCase().includes('rain')) {
+    const condition = String(weatherCond).toLowerCase();
+
+    if (condition.includes('rain')) {
         return 'Tip: Bring an umbrella and plan at least one indoor option.';
     }
     if (typeof uv === 'number' && uv >= 7) {
