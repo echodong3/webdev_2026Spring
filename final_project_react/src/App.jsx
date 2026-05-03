@@ -63,6 +63,25 @@ function todayKey() {
   return new Date().toISOString().split("T")[0];
 }
 
+function resourceHref(link) {
+  const value = String(link || "").trim();
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  if (/^r\//i.test(value)) return `https://www.reddit.com/${value}`;
+
+  const youtubeSearch = value.match(/^YouTube (?:channel\/search|search):\s*(.+)$/i);
+  if (youtubeSearch) {
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(youtubeSearch[1])}`;
+  }
+
+  const searchPhrase = value.match(/^(?:Search phrase|Search):\s*(.+)$/i);
+  if (searchPhrase) {
+    return `https://www.google.com/search?q=${encodeURIComponent(searchPhrase[1])}`;
+  }
+
+  return `https://www.google.com/search?q=${encodeURIComponent(value)}`;
+}
+
 function loadState() {
   const saved = localStorage.getItem("build-a-skill-react");
   return saved ? JSON.parse(saved) : defaultState;
@@ -227,6 +246,7 @@ function HomePage({ state, setState, setPage }) {
 function SkillMap({ state, setState, completedPercent }) {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [resourceError, setResourceError] = useState("");
   const nextMilestone = milestones.find(
     (_, index) => !state.completedMilestones.includes(index)
   );
@@ -244,21 +264,28 @@ function SkillMap({ state, setState, completedPercent }) {
   async function findResources() {
     setLoading(true);
     setResources([]);
+    setResourceError("");
 
     try {
-      const query = encodeURIComponent(state.skill || "learning");
-      const response = await fetch(`https://openlibrary.org/search.json?q=${query}&limit=6`);
+      const response = await fetch("/api/resources", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          skill: state.skill,
+          level: state.level,
+        }),
+      });
       const data = await response.json();
 
-      setResources(
-        data.docs.map((book) => ({
-          title: book.title,
-          author: book.author_name?.slice(0, 2).join(", ") || "Unknown author",
-          year: book.first_publish_year || "Unknown year",
-        }))
-      );
-    } catch {
-      setResources([{ title: "Could not load resources", author: "Try again later", year: "" }]);
+      if (!response.ok) {
+        throw new Error(data.error || "Could not generate resources.");
+      }
+
+      setResources(data.categories || []);
+    } catch (error) {
+      setResourceError(error.message);
     } finally {
       setLoading(false);
     }
@@ -345,17 +372,28 @@ function SkillMap({ state, setState, completedPercent }) {
           <BookOpen size={28} />
           <h2>Resource Finder</h2>
           <p>
-            This uses the external Open Library API to find books related to your selected skill.
+            This uses OpenAI to suggest books, videos, communities, and practice resources for your selected skill.
           </p>
           <button className="secondary-button" onClick={findResources}>
-            {loading ? "Searching..." : "Find API Resources"}
+            {loading ? "Searching..." : "Find AI Resources"}
           </button>
+          {resourceError && <p className="resource-error">{resourceError}</p>}
 
           <div className="resource-list">
-            {resources.map((book, index) => (
-              <div className="resource-item" key={`${book.title}-${index}`}>
-                <strong>{book.title}</strong>
-                <span>{book.author} · {book.year}</span>
+            {resources.map((category) => (
+              <div className="resource-category" key={category.name}>
+                <h3>{category.name}</h3>
+                {category.items.map((item, index) => (
+                  <div className="resource-item" key={`${category.name}-${item.title}-${index}`}>
+                    <strong>{item.title}</strong>
+                    <p>{item.description}</p>
+                    {item.link && (
+                      <a href={resourceHref(item.link)} target="_blank" rel="noreferrer">
+                        {item.link}
+                      </a>
+                    )}
+                  </div>
+                ))}
               </div>
             ))}
           </div>
