@@ -60,7 +60,14 @@ const defaultState = {
 };
 
 function todayKey() {
-  return new Date().toISOString().split("T")[0];
+  return dateKey(new Date());
+}
+
+function dateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function resourceHref(link) {
@@ -190,7 +197,9 @@ function HomePage({ state, setState, setPage }) {
     <section className="hero-grid">
       <div className="hero-copy">
         <p className="eyebrow">Personalized learning roadmap</p>
-        <h1>Turn a skill into a quest you actually want to finish.</h1>
+        <h1>BUILD</h1>
+        <h1 className="hero-a">A</h1>
+        <h1>SKILL</h1>
         <p>
           Build a Skill creates a flexible learning journey with milestones,
           daily micro-tasks, progress tracking, reflections, and API-powered resources.
@@ -372,10 +381,10 @@ function SkillMap({ state, setState, completedPercent }) {
           <BookOpen size={28} />
           <h2>Resource Finder</h2>
           <p>
-            This uses OpenAI to suggest books, videos, communities, and practice resources for your selected skill.
+            Supported by OpenAI to suggest relevant resources for the skill you want to learn.
           </p>
           <button className="secondary-button" onClick={findResources}>
-            {loading ? "Searching..." : "Find AI Resources"}
+            {loading ? "Searching..." : "Find Resources"}
           </button>
           {resourceError && <p className="resource-error">{resourceError}</p>}
 
@@ -472,7 +481,7 @@ function DailyPlan({ state, setState }) {
 
   const suggestion =
     completed.length === 0
-      ? "Start with the warm-up. Make the first step almost too easy."
+      ? "Try AI generated study plan based on your experience level and availability"
       : completed.length < planTasks.length
       ? "Nice progress. Focus on one more task instead of finishing everything perfectly."
       : "You finished today's plan. Add a reflection in Daily Log to lock in what you learned.";
@@ -482,7 +491,7 @@ function DailyPlan({ state, setState }) {
       <PageIntro
         label="Today"
         title="Daily Plan"
-        text="Small tasks make the roadmap feel manageable and help you keep momentum."
+        text="Break down the skill with small, manageable tasks each day"
       />
 
       <div className="two-column">
@@ -559,7 +568,7 @@ function MonthlyView({ state, setState }) {
       const parsed = new Date(log.date);
       if (Number.isNaN(parsed.getTime())) return;
 
-      const date = parsed.toISOString().split("T")[0];
+      const date = dateKey(parsed);
       activity[date] = (activity[date] || 0) + 1;
     });
 
@@ -567,7 +576,7 @@ function MonthlyView({ state, setState }) {
   }, [state.completedDates, state.completedTasks, state.logs]);
 
   function toggleDate(date) {
-    const key = date.toISOString().split("T")[0];
+    const key = dateKey(date);
     const exists = state.completedDates.includes(key);
 
     setState({
@@ -599,7 +608,7 @@ function MonthlyView({ state, setState }) {
           {days.map((date, index) => {
             if (!date) return <div key={`blank-${index}`} />;
 
-            const key = date.toISOString().split("T")[0];
+            const key = dateKey(date);
             const complete = state.completedDates.includes(key);
             const isToday = key === todayKey();
 
@@ -661,7 +670,7 @@ function ActivityHeatmap({ year, activityByDate }) {
   }, [year]);
 
   const activeDays = weeks.flat().filter((date) => {
-    const key = date.toISOString().split("T")[0];
+    const key = dateKey(date);
     return date.getFullYear() === year && activityByDate[key] > 0;
   }).length;
 
@@ -699,7 +708,7 @@ function ActivityHeatmap({ year, activityByDate }) {
             <div className="activity-grid" style={chartColumns}>
               {weeks.map((week, weekIndex) =>
                 week.map((date, dayIndex) => {
-                  const key = date.toISOString().split("T")[0];
+                  const key = dateKey(date);
                   const isThisYear = date.getFullYear() === year;
                   const count = activityByDate[key] || 0;
                   const level = isThisYear && count > 0 ? 1 : 0;
