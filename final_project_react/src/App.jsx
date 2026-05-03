@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   Compass,
   Home,
-  MessageCircle,
   Moon,
   PenLine,
   Sparkles,
@@ -56,15 +55,8 @@ const defaultState = {
   completedMilestones: [],
   completedTasks: {},
   completedDates: [],
+  customDailyTasks: null,
   logs: [],
-  posts: [
-    {
-      title: "Welcome to the learner forum!",
-      body: "Share one small win, a question, or a challenge you are facing.",
-      date: new Date().toLocaleString(),
-      likes: 0,
-    },
-  ],
 };
 
 function todayKey() {
@@ -105,8 +97,12 @@ export default function App() {
           />
         )}
         {page === "daily" && <DailyPlan state={state} setState={setState} />}
-        {page === "month" && <MonthlyView state={state} setState={setState} />}
-        {page === "forum" && <Forum state={state} setState={setState} />}
+        {page === "month" && (
+          <MonthlyView
+            state={state}
+            setState={setState}
+          />
+        )}
         {page === "log" && <DailyLog state={state} setState={setState} />}
       </main>
     </div>
@@ -119,7 +115,6 @@ function Navbar({ page, setPage, darkMode, setDarkMode }) {
     ["map", "Skill Map", Compass],
     ["daily", "Daily Plan", CheckCircle2],
     ["month", "Monthly", CalendarDays],
-    ["forum", "Forum", MessageCircle],
     ["log", "Daily Log", PenLine],
   ];
 
@@ -167,6 +162,7 @@ function HomePage({ state, setState, setPage }) {
       xp: 0,
       completedMilestones: [],
       completedTasks: {},
+      customDailyTasks: null,
     });
     setPage("map");
   }
@@ -231,6 +227,9 @@ function HomePage({ state, setState, setPage }) {
 function SkillMap({ state, setState, completedPercent }) {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(false);
+  const nextMilestone = milestones.find(
+    (_, index) => !state.completedMilestones.includes(index)
+  );
 
   function completeMilestone(index) {
     if (state.completedMilestones.includes(index)) return;
@@ -278,6 +277,40 @@ function SkillMap({ state, setState, completedPercent }) {
         <Stat label="XP" value={state.xp} />
         <Stat label="Progress" value={`${completedPercent}%`} />
         <Stat label="Daily Time" value={`${state.minutes} min`} />
+      </div>
+
+      <div className="quest-hud">
+        <div className="quest-progress">
+          <div className="quest-progress-copy">
+            <span>Quest Progress</span>
+            <strong>{completedPercent}%</strong>
+          </div>
+          <div className="quest-progress-bar" aria-label={`${completedPercent}% complete`}>
+            <div style={{ width: `${completedPercent}%` }} />
+          </div>
+          <p>
+            {nextMilestone
+              ? `Next stop: ${nextMilestone.title}`
+              : "All milestones complete. Your badge case is full."}
+          </p>
+        </div>
+
+        <div className="badge-case" aria-label="Earned badges">
+          {milestones.map((milestone, index) => {
+            const earned = state.completedMilestones.includes(index);
+
+            return (
+              <div
+                key={milestone.reward}
+                className={`badge-token ${earned ? "earned" : ""}`}
+                title={earned ? milestone.reward : "Locked badge"}
+              >
+                <Trophy size={18} />
+                <span>{milestone.reward}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="two-column">
@@ -334,7 +367,10 @@ function SkillMap({ state, setState, completedPercent }) {
 
 function DailyPlan({ state, setState }) {
   const today = todayKey();
+  const planTasks = state.customDailyTasks?.length ? state.customDailyTasks : dailyTasks;
   const completed = state.completedTasks[today] || [];
+  const [loadingPlan, setLoadingPlan] = useState(false);
+  const [planError, setPlanError] = useState("");
 
   function toggleTask(index) {
     const alreadyDone = completed.includes(index);
@@ -358,10 +394,48 @@ function DailyPlan({ state, setState }) {
     });
   }
 
+  async function generatePlan() {
+    setLoadingPlan(true);
+    setPlanError("");
+
+    try {
+      const response = await fetch("/api/daily-plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          skill: state.skill,
+          level: state.level,
+          minutes: state.minutes,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not generate a daily plan.");
+      }
+
+      setState({
+        ...state,
+        customDailyTasks: data.tasks,
+        completedTasks: {
+          ...state.completedTasks,
+          [today]: [],
+        },
+      });
+    } catch (error) {
+      setPlanError(error.message);
+    } finally {
+      setLoadingPlan(false);
+    }
+  }
+
   const suggestion =
     completed.length === 0
       ? "Start with the warm-up. Make the first step almost too easy."
-      : completed.length < dailyTasks.length
+      : completed.length < planTasks.length
       ? "Nice progress. Focus on one more task instead of finishing everything perfectly."
       : "You finished today's plan. Add a reflection in Daily Log to lock in what you learned.";
 
@@ -375,7 +449,7 @@ function DailyPlan({ state, setState }) {
 
       <div className="two-column">
         <div className="task-list">
-          {dailyTasks.map((task, index) => (
+          {planTasks.map((task, index) => (
             <label
               key={task.title}
               className={`task-card ${completed.includes(index) ? "complete" : ""}`}
@@ -385,10 +459,16 @@ function DailyPlan({ state, setState }) {
                 checked={completed.includes(index)}
                 onChange={() => toggleTask(index)}
               />
-              <div>
-                <span>{task.time}</span>
-                <h3>{task.title}</h3>
-                <p>{task.description}</p>
+              <div className="task-content">
+                <div className={`task-icon tone-${index + 1}`}>{index + 1}</div>
+                <div className="task-copy">
+                  <h3>{task.title}</h3>
+                  <p>{task.description}</p>
+                </div>
+                <div className="task-time">
+                  <span>●</span>
+                  <strong>{task.time}</strong>
+                </div>
               </div>
             </label>
           ))}
@@ -399,9 +479,13 @@ function DailyPlan({ state, setState }) {
           <h2>Adaptive Suggestion</h2>
           <p>{suggestion}</p>
           <div className="progress-bar">
-            <div style={{ width: `${(completed.length / dailyTasks.length) * 100}%` }} />
+            <div style={{ width: `${(completed.length / planTasks.length) * 100}%` }} />
           </div>
-          <span>{completed.length}/{dailyTasks.length} tasks complete</span>
+          <span>{completed.length}/{planTasks.length} tasks complete</span>
+          <button className="secondary-button plan-button" onClick={generatePlan}>
+            {loadingPlan ? "Generating..." : "Generate AI Plan"}
+          </button>
+          {planError && <p className="plan-error">{planError}</p>}
         </aside>
       </div>
     </section>
@@ -421,6 +505,28 @@ function MonthlyView({ state, setState }) {
     for (let d = 1; d <= finalDay; d++) result.push(new Date(year, month, d));
     return result;
   }, [year, month, first, finalDay]);
+
+  const activityByDate = useMemo(() => {
+    const activity = {};
+
+    Object.entries(state.completedTasks).forEach(([date, tasks]) => {
+      activity[date] = (activity[date] || 0) + tasks.length;
+    });
+
+    state.completedDates.forEach((date) => {
+      activity[date] = (activity[date] || 0) + 1;
+    });
+
+    state.logs.forEach((log) => {
+      const parsed = new Date(log.date);
+      if (Number.isNaN(parsed.getTime())) return;
+
+      const date = parsed.toISOString().split("T")[0];
+      activity[date] = (activity[date] || 0) + 1;
+    });
+
+    return activity;
+  }, [state.completedDates, state.completedTasks, state.logs]);
 
   function toggleDate(date) {
     const key = date.toISOString().split("T")[0];
@@ -471,74 +577,106 @@ function MonthlyView({ state, setState }) {
             );
           })}
         </div>
+
+        <ActivityHeatmap
+          year={year}
+          activityByDate={activityByDate}
+        />
       </div>
     </section>
   );
 }
 
-function Forum({ state, setState }) {
-  const [post, setPost] = useState({ title: "", body: "" });
+function ActivityHeatmap({ year, activityByDate }) {
+  const { weeks, monthLabels } = useMemo(() => {
+    const start = new Date(year, 0, 1);
+    start.setDate(start.getDate() - start.getDay());
 
-  function submitPost(event) {
-    event.preventDefault();
-    if (!post.title.trim() || !post.body.trim()) return;
+    const end = new Date(year, 11, 31);
+    end.setDate(end.getDate() + (6 - end.getDay()));
 
-    setState({
-      ...state,
-      posts: [
-        ...state.posts,
-        {
-          title: post.title,
-          body: post.body,
-          date: new Date().toLocaleString(),
-          likes: 0,
-        },
-      ],
+    const weekList = [];
+    let week = [];
+    const cursor = new Date(start);
+
+    while (cursor <= end) {
+      week.push(new Date(cursor));
+
+      if (week.length === 7) {
+        weekList.push(week);
+        week = [];
+      }
+
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    const labels = Array.from({ length: 12 }, (_, month) => {
+      const firstOfMonth = new Date(year, month, 1);
+      const daysSinceStart = Math.floor((firstOfMonth - start) / 86400000);
+      return {
+        label: firstOfMonth.toLocaleString("en-US", { month: "short" }),
+        column: Math.floor(daysSinceStart / 7) + 1,
+      };
     });
 
-    setPost({ title: "", body: "" });
-  }
+    return { weeks: weekList, monthLabels: labels };
+  }, [year]);
 
-  function likePost(index) {
-    const posts = [...state.posts];
-    posts[index] = { ...posts[index], likes: posts[index].likes + 1 };
-    setState({ ...state, posts });
-  }
+  const activeDays = weeks.flat().filter((date) => {
+    const key = date.toISOString().split("T")[0];
+    return date.getFullYear() === year && activityByDate[key] > 0;
+  }).length;
+
+  const chartColumns = { gridTemplateColumns: `repeat(${weeks.length}, minmax(0, 1fr))` };
 
   return (
-    <section>
-      <PageIntro
-        label="Community"
-        title="Forum"
-        text="This is a local demo forum: no login, no email, and no real data collection."
-      />
+    <section className="activity-panel" aria-label="Yearly activity heatmap">
+      <div className="activity-header">
+        <div>
+          <h3>{year} Goal Activity</h3>
+          <p>{activeDays} active days</p>
+        </div>
+      </div>
 
-      <div className="two-column reverse">
-        <form className="glass-card input-card" onSubmit={submitPost}>
-          <h2>Create a Post</h2>
-          <input
-            value={post.title}
-            onChange={(e) => setPost({ ...post, title: e.target.value })}
-            placeholder="Post title"
-          />
-          <textarea
-            rows="6"
-            value={post.body}
-            onChange={(e) => setPost({ ...post, body: e.target.value })}
-            placeholder="Ask a question or share a small win..."
-          />
-          <button className="primary-button">Post</button>
-        </form>
+      <div className="activity-scroll">
+        <div className="activity-map">
+          <div className="activity-months" style={chartColumns}>
+            {monthLabels.map((month) => (
+              <span
+                key={month.label}
+                style={{ gridColumn: `${month.column} / span 4` }}
+              >
+                {month.label}
+              </span>
+            ))}
+          </div>
 
-        <div className="post-list">
-          {state.posts.map((item, index) => (
-            <article className="post-card" key={`${item.title}-${index}`}>
-              <span>{item.date}</span>
-              <h3>{item.title}</h3>
-              <p>{item.body}</p>
-              <button onClick={() => likePost(index)}>Encourage 👍 {item.likes}</button>
-            </article>
-          ))}
+          <div className="activity-body">
+            <div className="activity-weekdays">
+              <span>Mon</span>
+              <span>Wed</span>
+              <span>Fri</span>
+            </div>
+
+            <div className="activity-grid" style={chartColumns}>
+              {weeks.map((week, weekIndex) =>
+                week.map((date, dayIndex) => {
+                  const key = date.toISOString().split("T")[0];
+                  const isThisYear = date.getFullYear() === year;
+                  const count = activityByDate[key] || 0;
+                  const level = isThisYear && count > 0 ? 1 : 0;
+
+                  return (
+                    <div
+                      key={`activity-${weekIndex}-${dayIndex}`}
+                      className={`activity-day level-${level} ${isThisYear ? "" : "outside-year"}`}
+                      title={`${date.toLocaleDateString()}: ${count} activity item${count === 1 ? "" : "s"}`}
+                    />
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </section>
