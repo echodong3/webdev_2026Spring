@@ -1,51 +1,17 @@
-# Build a Skill — React Version
-
+# Build a Skill — React app
+Have you ever wanted to learn something new but don't know where to start?
 Build a Skill is an interactive React web app that turns learning a new skill into a personalized roadmap.
 
 ## Features
+- Interactive skill map allow user to collect badges and level up based on their progress
+- Personalised daily plan that breaks the skills into manageable small tasks
+- Monthly progress calendar and yearly heatmap that track active days
+- Daily reflection log to keep track of mood and progress
+- Dark/light mode toggle
 
-- React + Vite single-page application
-- Skill setup form
-- Interactive unlockable skill map
-- XP and level system
-- AI-generated daily checklist
-- Monthly progress calendar
-- Daily reflection log
-- Dark mode toggle
-- OpenAI resource search
-- localStorage saving
+## OpenAI API
+- Suggest resources (books, YouTube videos, reddit etc) related to the skill that the user wants to learn
+- Generate daily plan based on user's skill level and time availability.
 
-## API
 
-This project uses OpenAI for the Daily Plan generator and Skill Map Resource Finder. The API key stays on the Vite dev server, not in browser code.
 
-1. Create an API key in the OpenAI dashboard.
-2. Create a local `.env` file in this folder:
-
-```bash
-cp .env.example .env
-```
-
-3. Add your key:
-
-```bash
-OPENAI_API_KEY=your_api_key_here
-OPENAI_MODEL=gpt-5.2
-```
-
-4. Restart the dev server after changing `.env`.
-
-## Run Locally
-
-```bash
-npm install
-npm run dev
-```
-
-## Build for Submission
-
-```bash
-npm run build
-```
-
-The production files will be in the `dist` folder.

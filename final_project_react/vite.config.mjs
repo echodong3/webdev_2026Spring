@@ -89,13 +89,18 @@ function extractJson(text) {
   return JSON.parse(fenced ? fenced[1] : trimmed);
 }
 
+function normalizeTime(value, fallback) {
+  const time = String(value || fallback || "10 min").trim();
+  return /^\d+$/.test(time) ? `${time} min` : time;
+}
+
 function normalizeTasks(tasks) {
   if (!Array.isArray(tasks)) return fallbackTasks;
 
   const cleaned = tasks
     .slice(0, 4)
     .map((task, index) => ({
-      time: String(task.time || fallbackTasks[index]?.time || "10 min"),
+      time: normalizeTime(task.time, fallbackTasks[index]?.time),
       title: String(task.title || fallbackTasks[index]?.title || `Task ${index + 1}`),
       description: String(
         task.description ||

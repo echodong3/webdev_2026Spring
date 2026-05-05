@@ -89,6 +89,19 @@ function resourceHref(link) {
   return `https://www.google.com/search?q=${encodeURIComponent(value)}`;
 }
 
+function displayTime(time) {
+  const value = String(time || "").trim();
+  return /^\d+$/.test(value) ? `${value} min` : value;
+}
+
+function descriptionBullets(description) {
+  const text = String(description || "").trim();
+  if (!text) return [];
+
+  const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+  return sentences.map((sentence) => sentence.trim()).filter(Boolean);
+}
+
 function loadState() {
   const saved = localStorage.getItem("build-a-skill-react");
   return saved ? JSON.parse(saved) : defaultState;
@@ -215,7 +228,10 @@ function HomePage({ state, setState, setPage }) {
       <form className="glass-card setup-form" onSubmit={handleSubmit}>
         <h2>Create your journey</h2>
 
-        <label htmlFor="skill">Skill</label>
+        <label htmlFor="skill" className="field-label">
+          Skill
+          <span> (e.g. Web Dev, Guitar, Cooking...)</span>
+        </label>
         <input
           id="skill"
           value={form.skill}
@@ -510,11 +526,14 @@ function DailyPlan({ state, setState }) {
                 <div className={`task-icon tone-${index + 1}`}>{index + 1}</div>
                 <div className="task-copy">
                   <h3>{task.title}</h3>
-                  <p>{task.description}</p>
+                  <ul>
+                    {descriptionBullets(task.description).map((bullet, bulletIndex) => (
+                      <li key={`${task.title}-bullet-${bulletIndex}`}>{bullet}</li>
+                    ))}
+                  </ul>
                 </div>
                 <div className="task-time">
-                  <span>●</span>
-                  <strong>{task.time}</strong>
+                  <strong>{displayTime(task.time)}</strong>
                 </div>
               </div>
             </label>

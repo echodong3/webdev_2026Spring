@@ -224,6 +224,12 @@ label {
   font-weight: 850;
 }
 
+.field-label span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
 input,
 select,
 textarea {
@@ -612,10 +618,16 @@ button:disabled {
   margin-bottom: 0.2rem;
 }
 
-.task-copy p {
+.task-copy ul {
   margin-bottom: 0;
+  padding-left: 1.1rem;
   color: var(--muted);
+  font-weight: 400;
   line-height: 1.4;
+}
+
+.task-copy li {
+  padding-left: 0.15rem;
 }
 
 .task-time {
@@ -628,13 +640,6 @@ button:disabled {
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 850;
-}
-
-.task-time span {
-  margin-bottom: 0.18rem;
-  color: var(--text);
-  font-size: 0.68rem;
-  line-height: 1;
 }
 
 .task-time strong {
