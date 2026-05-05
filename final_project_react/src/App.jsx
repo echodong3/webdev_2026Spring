@@ -4,6 +4,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Compass,
+  Crosshair,
   Home,
   Moon,
   PenLine,
@@ -14,7 +15,7 @@ import {
 
 const milestones = [
   {
-    title: "Define Your Quest",
+    title: "Define Your Goal",
     description: "Set a clear final goal and choose why this skill matters to you.",
     reward: "Clarity Badge",
   },
@@ -41,10 +42,26 @@ const milestones = [
 ];
 
 const dailyTasks = [
-  { time: "5 min", title: "Warm-up", description: "Review one idea from your previous session." },
-  { time: "15 min", title: "Focused Practice", description: "Work on one exercise connected to your current milestone." },
-  { time: "10 min", title: "Apply It", description: "Use the skill in a tiny example, sketch, prototype, or note." },
-  { time: "5 min", title: "Reflection", description: "Write what felt easy, confusing, or worth repeating." },
+  {
+    time: "5 min",
+    title: "Warm-up",
+    bullets: ["Review one idea from your previous session."],
+  },
+  {
+    time: "15 min",
+    title: "Focused Practice",
+    bullets: ["Work on one exercise connected to your current milestone."],
+  },
+  {
+    time: "10 min",
+    title: "Apply It",
+    bullets: ["Use the skill in a tiny example, sketch, prototype, or note."],
+  },
+  {
+    time: "5 min",
+    title: "Reflection",
+    bullets: ["Write what felt easy, confusing, or worth repeating."],
+  },
 ];
 
 const defaultState = {
@@ -94,12 +111,14 @@ function displayTime(time) {
   return /^\d+$/.test(value) ? `${value} min` : value;
 }
 
-function descriptionBullets(description) {
-  const text = String(description || "").trim();
-  if (!text) return [];
+function taskBullets(task) {
+  if (Array.isArray(task.bullets)) {
+    const bullets = task.bullets.map((bullet) => String(bullet).trim()).filter(Boolean);
+    if (bullets.length) return bullets;
+  }
 
-  const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
-  return sentences.map((sentence) => sentence.trim()).filter(Boolean);
+  const text = String(task.description || "").trim();
+  return text ? [text] : [];
 }
 
 function loadState() {
@@ -111,10 +130,23 @@ export default function App() {
   const [page, setPage] = useState("home");
   const [state, setState] = useState(loadState);
   const [darkMode, setDarkMode] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [focusWarning, setFocusWarning] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("build-a-skill-react", JSON.stringify(state));
   }, [state]);
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.hidden && focusMode) {
+        setFocusWarning(true);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [focusMode]);
 
   const completedPercent = Math.round(
     (state.completedMilestones.length / milestones.length) * 100
@@ -124,7 +156,14 @@ export default function App() {
 
   return (
     <div className={appClass}>
-      <Navbar page={page} setPage={setPage} darkMode={darkMode} setDarkMode={setDarkMode} />
+      <Navbar
+        page={page}
+        setPage={setPage}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        focusMode={focusMode}
+        setFocusMode={setFocusMode}
+      />
 
       <main className="main-shell">
         {page === "home" && <HomePage state={state} setState={setState} setPage={setPage} />}
@@ -144,11 +183,24 @@ export default function App() {
         )}
         {page === "log" && <DailyLog state={state} setState={setState} />}
       </main>
+
+      {focusWarning && (
+        <div className="focus-overlay" role="alertdialog" aria-modal="true">
+          <div className="focus-modal">
+            <Crosshair size={34} />
+            <h2>Stay Focused</h2>
+            <p>Don't switch tabs. Stay focused on your learning goal.</p>
+            <button className="primary-button" onClick={() => setFocusWarning(false)}>
+              Back to focus
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function Navbar({ page, setPage, darkMode, setDarkMode }) {
+function Navbar({ page, setPage, darkMode, setDarkMode, focusMode, setFocusMode }) {
   const navItems = [
     ["home", "Home", Home],
     ["map", "Skill Map", Compass],
@@ -177,9 +229,26 @@ function Navbar({ page, setPage, darkMode, setDarkMode }) {
         ))}
       </nav>
 
-      <button className="theme-button" onClick={() => setDarkMode(!darkMode)}>
-        {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-      </button>
+      <div className="mode-actions">
+        <button
+          className={focusMode ? "theme-button focus-active" : "theme-button"}
+          onClick={() => setFocusMode(!focusMode)}
+          title={focusMode ? "Turn off Focus Mode" : "Turn on Focus Mode"}
+          aria-label={focusMode ? "Turn off Focus Mode" : "Turn on Focus Mode"}
+          aria-pressed={focusMode}
+        >
+          <Crosshair size={18} />
+        </button>
+
+        <button
+          className="theme-button"
+          onClick={() => setDarkMode(!darkMode)}
+          title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+          aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+      </div>
     </header>
   );
 }
@@ -527,7 +596,7 @@ function DailyPlan({ state, setState }) {
                 <div className="task-copy">
                   <h3>{task.title}</h3>
                   <ul>
-                    {descriptionBullets(task.description).map((bullet, bulletIndex) => (
+                    {taskBullets(task).map((bullet, bulletIndex) => (
                       <li key={`${task.title}-bullet-${bulletIndex}`}>{bullet}</li>
                     ))}
                   </ul>
@@ -549,7 +618,7 @@ function DailyPlan({ state, setState }) {
           </div>
           <span>{completed.length}/{planTasks.length} tasks complete</span>
           <button className="secondary-button plan-button" onClick={generatePlan}>
-            {loadingPlan ? "Generating..." : "Generate AI Plan"}
+            {loadingPlan ? "Generating..." : "Generate Plan"}
           </button>
           {planError && <p className="plan-error">{planError}</p>}
         </aside>

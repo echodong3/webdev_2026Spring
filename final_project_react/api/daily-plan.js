@@ -2,22 +2,22 @@ const fallbackTasks = [
   {
     time: "5 min",
     title: "Warm-up",
-    description: "Review one idea from your previous session.",
+    bullets: ["Review one idea from your previous session."],
   },
   {
     time: "15 min",
     title: "Focused Practice",
-    description: "Work on one exercise connected to your current milestone.",
+    bullets: ["Work on one exercise connected to your current milestone."],
   },
   {
     time: "10 min",
     title: "Apply It",
-    description: "Use the skill in a tiny example, sketch, prototype, or note.",
+    bullets: ["Use the skill in a tiny example, sketch, prototype, or note."],
   },
   {
     time: "5 min",
     title: "Reflection",
-    description: "Write what felt easy, confusing, or worth repeating.",
+    bullets: ["Write what felt easy, confusing, or worth repeating."],
   },
 ];
 
@@ -36,21 +36,34 @@ function normalizeTime(value, fallback) {
   return /^\d+$/.test(time) ? `${time} min` : time;
 }
 
+function normalizeBullets(task, fallback) {
+  const source = Array.isArray(task.bullets)
+    ? task.bullets
+    : Array.isArray(task.description)
+    ? task.description
+    : [task.description || fallback?.description || fallback?.bullets?.[0]];
+
+  return source
+    .map((bullet) => String(bullet || "").trim())
+    .filter(Boolean)
+    .slice(0, 3);
+}
+
 function normalizeTasks(tasks) {
   if (!Array.isArray(tasks)) return fallbackTasks;
 
   const cleaned = tasks
     .slice(0, 4)
-    .map((task, index) => ({
-      time: normalizeTime(task.time, fallbackTasks[index]?.time),
-      title: String(task.title || fallbackTasks[index]?.title || `Task ${index + 1}`),
-      description: String(
-        task.description ||
-          fallbackTasks[index]?.description ||
-          "Complete one practical step for your skill."
-      ),
-    }))
-    .filter((task) => task.title.trim() && task.description.trim());
+    .map((task, index) => {
+      const fallback = fallbackTasks[index];
+
+      return {
+        time: normalizeTime(task.time, fallback?.time),
+        title: String(task.title || fallback?.title || `Task ${index + 1}`),
+        bullets: normalizeBullets(task, fallback),
+      };
+    })
+    .filter((task) => task.title.trim() && task.bullets.length);
 
   return cleaned.length ? cleaned : fallbackTasks;
 }
@@ -85,7 +98,7 @@ module.exports = async function handler(req, res) {
           {
             role: "developer",
             content:
-              "Create practical daily learning plans. Return only valid JSON with a tasks array. Each task needs time, title, and description. Keep exactly 4 tasks. The total time should match the user's available minutes. Descriptions should be concrete actions, not generic encouragement.",
+              "Create practical daily learning plans. Return only valid JSON with a tasks array. Keep exactly 4 tasks. Each task needs time, title, and bullets. bullets must be an array of 1 to 3 short concrete action strings. Do not put markdown bullets inside the strings. The total time should match the user's available minutes. Bullet text should be concrete actions, not generic encouragement.",
           },
           {
             role: "user",

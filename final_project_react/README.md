@@ -8,6 +8,7 @@ Build a Skill is an interactive React web app that turns learning a new skill in
 - Monthly progress calendar and yearly heatmap that track active days
 - Daily reflection log to keep track of mood and progress
 - Dark/light mode toggle
+- Focused mode gives warning when user switches tab
 
 ## OpenAI API
 - Suggest resources (books, YouTube videos, reddit etc) related to the skill that the user wants to learn

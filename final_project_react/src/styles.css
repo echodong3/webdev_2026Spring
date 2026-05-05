@@ -115,6 +115,19 @@ button {
   background: var(--surface-strong);
 }
 
+.mode-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.theme-button.focus-active {
+  color: white;
+  border-color: rgba(255, 122, 89, 0.65);
+  background: var(--accent);
+  box-shadow: 0 12px 24px rgba(255, 122, 89, 0.24);
+}
+
 .main-shell {
   width: min(1180px, 90vw);
   margin: 0 auto;
@@ -838,6 +851,47 @@ button:disabled {
 .post-card button {
   margin-top: 0.5rem;
   padding: 0.65rem 0.85rem;
+}
+
+.focus-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(19, 21, 29, 0.56);
+  backdrop-filter: blur(12px);
+}
+
+.focus-modal {
+  width: min(390px, 100%);
+  padding: 1.6rem;
+  text-align: center;
+  color: var(--text);
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+
+.focus-modal svg {
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+
+.focus-modal h2 {
+  margin-bottom: 0.55rem;
+}
+
+.focus-modal p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.focus-modal button {
+  width: 100%;
+  margin-top: 0.25rem;
 }
 
 @media (max-width: 920px) {
